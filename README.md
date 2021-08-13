@@ -57,7 +57,7 @@ SOFTWARE.
 
 ## Contributing
 
-nothing to shout out.
+following [this](https://www.howtographql.com/graphql-ruby/1-getting-started/) to get started on the backend.
 
 ## Tests
 
