@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Types
   class QueryType < BaseObject
     # queries are just represented as fields
