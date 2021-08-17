@@ -5,6 +5,8 @@ on: [push]
 jobs:
   lint:
     runs-on: ubuntu-latest
+    env:
+      working-directory: ./server
     steps:
     - uses: actions/checkout@v2
     - uses: ruby/setup-ruby@v1
@@ -12,8 +14,8 @@ jobs:
         ruby-version: 3.0.1
     - run: bundle install
     - name: Rubocop
-      working-directory: ./server
       run: bundle exec rubocop
+      working-directory: ${{env.working-directory}}
   test:
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +24,8 @@ jobs:
       with:
         ruby-version: 3.0.1
     - run: docker-compose run web bundle exec rake db:test:prepare
+      working-directory: ${{env.working-directory}}
     - name: MiniTest
-      working-directory: ./server
+      working-directory: ${{env.working-directory}}
       run: docker-compose exec web rails test
     - run: docker-compose down
