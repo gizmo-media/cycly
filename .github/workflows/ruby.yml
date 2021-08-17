@@ -11,6 +11,9 @@ jobs:
       with:
         ruby-version: 3.0.1
     - run: bundle install
+    - name: Rubocop
+      working-directory: ./server
+      run: bundle exec rubocop
   test:
     runs-on: ubuntu-latest
     steps:
@@ -20,5 +23,6 @@ jobs:
         ruby-version: 3.0.1
     - run: docker-compose run web bundle exec rake db:test:prepare
     - name: MiniTest
+      working-directory: ./server
       run: docker-compose exec web rails test
     - run: docker-compose down
