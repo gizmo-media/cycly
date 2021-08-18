@@ -1,9 +1,12 @@
+# frozen_string_literal: true
+
 class GraphqlController < ApplicationController
   # If accessing from outside this domain, nullify the session
   # This allows for outside API access while preventing CSRF attacks,
   # but you'll have to authenticate your user separately
   # protect_from_forgery with: :null_session
 
+  # rubocop:disable Metrics/MethodLength
   def execute
     variables = ensure_hash(params[:variables])
     query = params[:query]
@@ -12,16 +15,20 @@ class GraphqlController < ApplicationController
       # Query context goes here, for example:
       # current_user: current_user,
     }
-    result = GraphqlTutorialSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
+    result = GraphqlTutorialSchema.execute(query, variables: variables, context: context,
+                                                  operation_name: operation_name)
     render json: result
-  rescue => e
+  rescue StandardError => e
     raise e unless Rails.env.development?
+
     handle_error_in_development e
   end
+  # rubocop:enable Metrics/MethodLength
 
   private
 
   # Handle form data, JSON body, or a blank value
+  # rubocop:disable Metrics/MethodLength
   def ensure_hash(ambiguous_param)
     case ambiguous_param
     when String
@@ -38,11 +45,12 @@ class GraphqlController < ApplicationController
       raise ArgumentError, "Unexpected parameter: #{ambiguous_param}"
     end
   end
+  # rubocop:enable Metrics/MethodLength
 
-  def handle_error_in_development(e)
-    logger.error e.message
-    logger.error e.backtrace.join("\n")
+  def handle_error_in_development(err)
+    logger.error err.message
+    logger.error err.backtrace.join("\n")
 
-    render json: { error: { message: e.message, backtrace: e.backtrace }, data: {} }, status: 500
+    render json: { error: { message: err.message, backtrace: err.backtrace }, data: {} }, status: :internal_server_error
   end
 end
