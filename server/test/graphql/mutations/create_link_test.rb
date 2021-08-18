@@ -1,18 +1,22 @@
-require 'test_helper'
+# frozen_string_literal: true
 
-class Mutations::CreateLinkTest < ActiveSupport::TestCase
-  def perform(user: nil, **args)
-    Mutations::CreateLink.new(object: nil, field: nil, context: {}).resolve(args)
-  end
+require "test_helper"
 
-  test 'create a new link' do
-    link = perform(
-      url: 'http://example.com',
-      description: 'description',
-    )
+module Mutations
+  class CreateLinkTest < ActiveSupport::TestCase
+    def perform(_user: nil, **args)
+      Mutations::CreateLink.new(object: nil, field: nil, context: {}).resolve(args)
+    end
 
-    assert link.persisted?
-    assert_equal link.description, 'description'
-    assert_equal link.url, 'http://example.com'
+    test "create a new link" do
+      link = perform(
+        url: "http://example.com",
+        description: "description"
+      )
+
+      assert link.persisted?
+      assert_equal link.description, "description"
+      assert_equal link.url, "http://example.com"
+    end
   end
 end

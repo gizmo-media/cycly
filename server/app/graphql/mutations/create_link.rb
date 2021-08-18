@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Mutations
   class CreateLink < BaseMutation
     # arguments passed to the `resolve` method
@@ -10,7 +12,7 @@ module Mutations
     def resolve(description: nil, url: nil)
       Link.create!(
         description: description,
-        url: url,
+        url: url
       )
     end
   end
