@@ -76,6 +76,6 @@ jobs:
         run: |
           gem install bundler
           bundle config path vendor/bundle
-          bundle install --without default development test --jobs 4 --retry 3
+          bundle install --jobs 4 --retry 3
       - name: Run rubocop
         run: bundle exec rubocop --parallel
