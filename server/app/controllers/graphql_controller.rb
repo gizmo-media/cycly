@@ -8,7 +8,7 @@ class GraphqlController < ApplicationController
 
   # rubocop:disable Metrics/MethodLength
   def execute
-    variables = ensure_hash(params[:variables])
+    variables = prepare_variables(params[:variables])
     query = params[:query]
     operation_name = params[:operationName]
     context = {
@@ -20,29 +20,30 @@ class GraphqlController < ApplicationController
     render json: result
   rescue StandardError => e
     raise e unless Rails.env.development?
-
-    handle_error_in_development e
+    handle_error_in_development(e)
   end
   # rubocop:enable Metrics/MethodLength
 
   private
 
-  # Handle form data, JSON body, or a blank value
+  # Handle variables in form data, JSON body, or a blank value
   # rubocop:disable Metrics/MethodLength
-  def ensure_hash(ambiguous_param)
-    case ambiguous_param
+  def prepare_variables(variables_param)
+    case variables_param
     when String
-      if ambiguous_param.present?
-        ensure_hash(JSON.parse(ambiguous_param))
+      if variables_param.present?
+        JSON.parse(variables_param) || {}
       else
         {}
       end
-    when Hash, ActionController::Parameters
-      ambiguous_param
+    when Hash
+      variables_param
+    when ActionController::Parameters
+      variables_param.to_unsafe_hash # GraphQL-Ruby will validate name and type of incoming variables.
     when nil
       {}
     else
-      raise ArgumentError, "Unexpected parameter: #{ambiguous_param}"
+      raise ArgumentError, "Unexpected parameter: #{variables_param}"
     end
   end
   # rubocop:enable Metrics/MethodLength
@@ -51,6 +52,7 @@ class GraphqlController < ApplicationController
     logger.error err.message
     logger.error err.backtrace.join("\n")
 
-    render json: { error: { message: err.message, backtrace: err.backtrace }, data: {} }, status: :internal_server_error
+    render json: { errors: [{ message: err.message, backtrace: err.backtrace }],
+                   data: {} }, status: :internal_server_error
   end
 end
