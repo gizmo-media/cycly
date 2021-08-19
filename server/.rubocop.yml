@@ -8,6 +8,7 @@ AllCops:
     - db/schema.rb
     - bin/**/*
     - node_modules/**/*
+  TargetRubyVersion: 3.0
 
 Layout/EmptyLineAfterGuardClause:
   Enabled: false
