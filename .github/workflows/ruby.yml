@@ -5,81 +5,51 @@ on: [push]
 defaults:
   run:
     working-directory: ./server
-env:
-  DB_HOST: localhost
-  DB_USERNAME: postgres
-  DB_PASSWORD: postgres
 
+      
 jobs:
-  minitest:
+  build:
     runs-on: ubuntu-latest
-
     services:
       postgres:
         image: postgres:latest
-        env:
-          POSTGRES_DB: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-        ports: 
+        ports:
           - 5432:5432
-        options: >-
-          --health-cmd pg_isready 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - uses: actions/checkout@v1
 
-      - name: Install required packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes libpq-dev
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: actions/setup-ruby@v1
         with:
           ruby-version: 3.0.1
+          
+      - name: Install dependent libraries
+        run: sudo apt-get install libpq-dev
 
-      - name: Set up Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 12.13.0
-
-      - name: Set up gems cache
-        uses: actions/cache@preview
-        with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-ruby-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-ruby-
-      - name: Set up node_modules cache
-        uses: actions/cache@preview
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install Ruby dependencies
+      - name: Bundle install
         run: |
           gem install bundler
-          bundle config path vendor/bundle
-          bundle install
-      - name: Install Node dependencies
-        run: |
-          npm install -g yarn
-          yarn install --frozen-lockfile
-      - name: Set up database
-        run: bundle exec rake db:setup
+          bundle install --jobs 4 --retry 3
 
-      - name: Run tests
+      - name: Setup Database
+        run: |
+          cp config/database.yml.github-actions config/database.yml
+          bundle exec rake db:create
+          bundle exec rake db:schema:load
+        env:
+          RAILS_ENV: test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+      
+      - name: Run Rubocop
+        run: bundle exec rubocop --config .rubocop.yml
+          
+      - name: Run Test
         run: bundle exec rake test
-  rubocop:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.0.1
-    - run: bundle install
-    - name: Rubocop
-      run: bundle exec rubocop --config .rubocop.yml
+        env:
+          RAILS_ENV: test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
